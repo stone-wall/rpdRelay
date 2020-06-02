@@ -1,18 +1,17 @@
-import mu.KLogger
-import mu.KLogging
+
 import mu.KotlinLogging
 import org.jsoup.Jsoup
-import java.time.Instant
-import java.util.*
+import twitter4j.Twitter
+import twitter4j.TwitterFactory
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.concurrent.fixedRateTimer
 
-class Scraper {
+class Scraper(private val twitter: Twitter) {
 
-    val url = "https://apps.richmondgov.com/applications/activecalls/Home/ActiveCalls?"
-    val log = KotlinLogging.logger("Default")
-    var firstRun = false
-    val events = CopyOnWriteArraySet<Call>()
+    private val url = "https://apps.richmondgov.com/applications/activecalls/Home/ActiveCalls?"
+    private val log = KotlinLogging.logger("Default")
+    private var firstRun = true
+    private val events = CopyOnWriteArraySet<Call>()
 
 
     fun parseDoc() {
@@ -21,23 +20,32 @@ class Scraper {
         val activeCalls = table[0].getElementsByTag("tr")
         activeCalls.forEach { call ->
             with (call.children().map { it.text() }) {
-                val call = Call(this[0], this[1], this[2], this[3], this[4], this[5], this[6])
-                if (!firstRun && !events.contains(call)) {
-                    alert(call)
-                    events.add(call)
+                val callElement = Call(this[0], this[1], this[2], this[3], this[4], this[5], this[6])
+                if (!firstRun && !events.contains(callElement)) {
+                    alert(callElement)
+                    events.add(callElement)
+                }
+                if (firstRun) {
+                    events.add(callElement)
                 }
             }
         }
         firstRun = false
     }
-    fun alert(call: Call) {
-        println("ALERT!!!! ${call.timeReceived}: ${call.callType} $call")
+
+
+    private fun alert(call: Call) {
+        val message = "ALERT(${call.timeReceived}): ${call.agency} ${call.status} ${call.location}: ${call.callType}"
+        val status = twitter.updateStatus(message)
+        log.info(status.text)
     }
 }
 
 fun main() {
-    val scraper = Scraper()
-    fixedRateTimer("RVAScraper", false, 0, 60000) {
+    val factory = TwitterFactory()
+
+    val scraper = Scraper(factory.instance)
+    fixedRateTimer("Relay", false, 0, 60000) {
         scraper.parseDoc()
     }
 }

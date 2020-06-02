@@ -2,6 +2,7 @@
 import mu.KotlinLogging
 import org.jsoup.Jsoup
 import twitter4j.Twitter
+import twitter4j.TwitterException
 import twitter4j.TwitterFactory
 import java.util.concurrent.CopyOnWriteArraySet
 import kotlin.concurrent.fixedRateTimer
@@ -12,6 +13,7 @@ class Scraper(private val twitter: Twitter) {
     private val log = KotlinLogging.logger("Default")
     private var firstRun = true
     private val events = CopyOnWriteArraySet<Call>()
+    private var previousTweetText = ""
 
 
     fun parseDoc() {
@@ -36,8 +38,19 @@ class Scraper(private val twitter: Twitter) {
 
     private fun alert(call: Call) {
         val message = "ALERT(${call.timeReceived}): ${call.agency} ${call.status} ${call.location}: ${call.callType}"
-        val status = twitter.updateStatus(message)
-        log.info(status.text)
+        if (message != previousTweetText) {
+            try {
+                val status = twitter.updateStatus(message)
+                log.info(status.text)
+                previousTweetText = message
+            } catch (e: TwitterException) {
+                log.warn { e.errorMessage }
+            }
+
+            return
+        }
+        log.warn { "Duplicate tweet.." }
+        log.info { message }
     }
 }
 

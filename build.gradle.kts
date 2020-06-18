@@ -2,9 +2,11 @@ plugins {
     application
     java
     kotlin("jvm") version "1.3.72"
+    kotlin("plugin.serialization") version "1.3.70"
+
 }
 
-group = "org.example"
+group = "com.github.stonewall"
 version = "1.0-SNAPSHOT"
 
 repositories {
@@ -17,13 +19,18 @@ dependencies {
     implementation("org.jsoup:jsoup:1.13.1")
     implementation("io.github.microutils:kotlin-logging:1.7.9")
     implementation(kotlin("stdlib-jdk8"))
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0") // JVM dependency
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7")
-    testCompile("junit", "junit", "4.12")
+    testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
+    implementation(kotlin("reflect"))
+    testImplementation(kotlin("test"))
+    testImplementation(kotlin("test-junit"))
 }
 
 application {
     mainClassName = "ScraperKt"
 }
+
 
 configure<JavaPluginConvention> {
     sourceCompatibility = JavaVersion.VERSION_1_8
@@ -34,5 +41,14 @@ tasks {
     }
     compileTestKotlin {
         kotlinOptions.jvmTarget = "11"
+    }
+    test {
+        doFirst {
+            processTestResources
+        }
+        useJUnitPlatform()
+        testLogging {
+            events("passed", "skipped", "failed")
+        }
     }
 }

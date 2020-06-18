@@ -1,3 +1,6 @@
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Call(
     val timeReceived: String,
     val agency: String,

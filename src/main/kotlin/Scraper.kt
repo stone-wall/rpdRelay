@@ -1,64 +1,96 @@
-
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.consumeEach
 import mu.KotlinLogging
 import org.jsoup.Jsoup
-import twitter4j.Twitter
-import twitter4j.TwitterException
+import org.jsoup.nodes.Document
+import org.jsoup.select.Elements
 import twitter4j.TwitterFactory
+import java.io.File
+import java.lang.Exception
+import java.net.ConnectException
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.CopyOnWriteArraySet
+import javax.xml.crypto.Data
 import kotlin.concurrent.fixedRateTimer
 
-class Scraper(private val twitter: Twitter) {
+val newCallChannel = Channel<Call>(12)
+val log = KotlinLogging.logger("Default")
 
-    private val url = "https://apps.richmondgov.com/applications/activecalls/Home/ActiveCalls?"
-    private val log = KotlinLogging.logger("Default")
-    private var firstRun = true
+class Scraper(private val url: String, private val testMode: Boolean = false) {
+
+
     private val events = CopyOnWriteArraySet<Call>()
-    private var previousTweetText = ""
 
 
-    fun parseDoc() {
-        val doc = Jsoup.connect(url).get()
-        val table = doc.getElementsByTag("tbody")
-        val activeCalls = table[0].getElementsByTag("tr")
-        activeCalls.forEach { call ->
-            with (call.children().map { it.text() }) {
-                val callElement = Call(this[0], this[1], this[2], this[3], this[4], this[5], this[6])
-                if (!firstRun && !events.contains(callElement)) {
-                    alert(callElement)
-                    events.add(callElement)
-                }
-                if (firstRun) {
-                    events.add(callElement)
-                }
+    fun parseDoc(document: File? = null): Document? {
+        var doc: Document = if (testMode) {
+            Jsoup.parse(document?.readText(StandardCharsets.ISO_8859_1))
+        } else {
+            try {
+                Jsoup.connect(url).get()
+            } catch (e: ConnectException) {
+                log.error { "Website is down, skipping execution" }
+                return null
             }
         }
-        firstRun = false
+
+        extractCalls(doc)
+        return doc
     }
 
-
-    private fun alert(call: Call) {
-        val message = "ALERT(${call.timeReceived}): ${call.agency} ${call.status} ${call.location}: ${call.callType}"
-        if (message != previousTweetText) {
-            try {
-                val status = twitter.updateStatus(message)
-                log.info(status.text)
-                previousTweetText = message
-            } catch (e: TwitterException) {
-                log.warn { e.errorMessage }
+    private fun extractCalls(doc: Document) {
+        val activeCalls = getTableRows(doc)
+        if (activeCalls != null) {
+            val currentCalls = getCalls(activeCalls).toSet()
+            events.retainAll(currentCalls)
+            currentCalls.filterNot { events.contains(it) }.forEach {
+                runBlocking {
+                    emitCall(it)
+                    events.add(it)
+                }
             }
-
-            return
+        } else {
+            throw Exception("Unable to scrape calls from table rows of html document. Full html output: ${doc.html()}")
         }
-        log.warn { "Duplicate tweet.." }
-        log.info { message }
+    }
+
+    private suspend fun emitCall(it: Call) {
+        withContext(Dispatchers.IO) {
+            launch {
+                newCallChannel.send(it)
+            }
+        }
+    }
+
+    fun getTableRows(doc: Document): Elements? {
+        val table = doc.getElementsByTag("tbody").first()
+        return table.getElementsByTag("tr")
+    }
+
+    fun getCalls(activeCalls: Elements): List<Call> {
+        return activeCalls.map { elements ->
+            with(elements.children().map { it.text() }) {
+                Call(this[0], this[1], this[2], this[3], this[4], this[5], this[6])
+            }
+        }
     }
 }
 
+@ExperimentalCoroutinesApi
 fun main() {
     val factory = TwitterFactory()
-
-    val scraper = Scraper(factory.instance)
-    fixedRateTimer("Relay", false, 0, 60000) {
-        scraper.parseDoc()
+    val dispatcher = TwitterDispatcher(factory.instance)
+    val scraper = Scraper("https://apps.richmondgov.com/applications/activecalls/Home/ActiveCalls?")
+    val store = Datastore()
+    runBlocking {
+        fixedRateTimer("Relay", false, 0, 60000) {
+            scraper.parseDoc()
+        }
+        newCallChannel.consumeEach {
+            println(it)
+            dispatcher.alert(it)
+            store.save(it)
+        }
     }
 }

@@ -12,7 +12,7 @@ data class Call(
 ) {
     override fun equals(other: Any?): Boolean {
         if (other !is Call) return false
-        return other.agency == this.agency && other.dispatchArea == this.dispatchArea &&
-                other.unit == this.unit && other.location == this.location && other.callType == this.callType
+        return other.agency == this.agency && other.dispatchArea == this.dispatchArea && other.location == this.location
+                && other.callType == this.callType
     }
 }

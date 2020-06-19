@@ -8,10 +8,9 @@ class TwitterDispatcher(private val twitter: Twitter) {
         if (message != previousTweetText) {
             try {
                 val status = twitter.updateStatus(message)
-                log.info(status.text)
                 previousTweetText = message
             } catch (e: TwitterException) {
-                log.warn { e.errorMessage }
+                log.error { e.errorMessage }
             }
 
             return

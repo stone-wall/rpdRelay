@@ -11,7 +11,6 @@ import java.lang.Exception
 import java.net.ConnectException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CopyOnWriteArraySet
-import javax.xml.crypto.Data
 import kotlin.concurrent.fixedRateTimer
 
 val newCallChannel = Channel<Call>(12)
@@ -77,20 +76,3 @@ class Scraper(private val url: String, private val testMode: Boolean = false) {
     }
 }
 
-@ExperimentalCoroutinesApi
-fun main() {
-    val factory = TwitterFactory()
-    val dispatcher = TwitterDispatcher(factory.instance)
-    val scraper = Scraper("https://apps.richmondgov.com/applications/activecalls/Home/ActiveCalls?")
-    val store = Datastore()
-    runBlocking {
-        fixedRateTimer("Relay", false, 0, 60000) {
-            scraper.parseDoc()
-        }
-        newCallChannel.consumeEach {
-            println(it)
-            dispatcher.alert(it)
-            store.save(it)
-        }
-    }
-}

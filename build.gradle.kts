@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "com.github.stonewall"
-version = "1.0-SNAPSHOT"
+version = "1.1"
 
 repositories {
     mavenCentral()
@@ -28,13 +28,10 @@ dependencies {
 }
 
 application {
-    mainClassName = "ScraperKt"
+    mainClassName = "RPDRelayKt"
 }
 
 
-configure<JavaPluginConvention> {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-}
 tasks {
     compileKotlin {
         kotlinOptions.jvmTarget = "11"

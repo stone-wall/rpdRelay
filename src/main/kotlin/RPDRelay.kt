@@ -2,6 +2,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.runBlocking
 import twitter4j.TwitterFactory
+import java.net.SocketTimeoutException
 import kotlin.concurrent.fixedRateTimer
 
 @ExperimentalCoroutinesApi
@@ -12,12 +13,18 @@ fun main() {
     val store = Datastore()
     runBlocking {
         fixedRateTimer("Relay", false, 0, 60000) {
-            scraper.parseDoc()
+            try {
+                scraper.parseDoc()
+            }
+            catch (e: SocketTimeoutException) {
+                log.error { "SocketTimeOutException: ${e.message}" }
+                scheduledExecutionTime()
+            }
         }
         newCallChannel.consumeEach {
             println(it)
-            dispatcher.alert(it)
-            store.save(it)
+            //dispatcher.alert(it)
+            store.saveCall(it)
         }
     }
 }

@@ -1,17 +1,14 @@
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
 import mu.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
-import twitter4j.TwitterFactory
 import java.io.File
 import java.lang.Exception
 import java.net.ConnectException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CopyOnWriteArraySet
-import kotlin.concurrent.fixedRateTimer
 
 val newCallChannel = Channel<Call>(12)
 val log = KotlinLogging.logger("Default")
@@ -23,7 +20,7 @@ class Scraper(private val url: String, private val testMode: Boolean = false) {
 
 
     fun parseDoc(document: File? = null): Document? {
-        var doc: Document = if (testMode) {
+        val doc: Document = if (testMode) {
             Jsoup.parse(document?.readText(StandardCharsets.ISO_8859_1))
         } else {
             try {

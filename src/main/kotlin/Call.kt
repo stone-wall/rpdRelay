@@ -16,3 +16,15 @@ data class Call(
                 && other.callType == this.callType
     }
 }
+
+enum class Precinct(val asString: String) {
+    FIRST("Precinct 1"),
+    SECOND("Precinct 2"),
+    THIRD("Precinct 3"),
+    FOURTH("Precinct 4");
+
+}
+
+fun String.asPrecinct(): Precinct? {
+    return Precinct.values().find { it.asString == this }
+}

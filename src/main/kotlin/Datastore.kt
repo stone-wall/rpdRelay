@@ -1,7 +1,6 @@
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.UnstableDefault
 import kotlinx.serialization.json.Json
 import java.io.File
 
@@ -14,12 +13,10 @@ class Datastore(private val store: File = File("calls")) {
             store.createNewFile()
         }
     }
-
-    @OptIn(UnstableDefault::class)
     suspend fun save(call: Call) {
         withContext(Dispatchers.IO) {
             launch {
-                store.appendText(Json.stringify(serializer, call) + "\n")
+                store.appendText(Json.encodeToString(serializer, call) + "\n")
             }
         }
     }

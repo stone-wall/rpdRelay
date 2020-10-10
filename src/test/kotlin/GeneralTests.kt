@@ -1,19 +1,22 @@
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.consume
 import kotlinx.coroutines.channels.consumeEach
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.first
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertNotNull
 import kotlin.test.fail
 
 class GeneralTests {
     val calls1 = GeneralTests::class.java.classLoader.getResource("calls1.html")
-    val scraper = Scraper("", testMode = true)
-    val doc = scraper.parseDoc(File(calls1.file))
-    val rows = scraper.getTableRows(doc)
+    private val scraper = Scraper("", testMode = true)
+    private val doc = scraper.parseDoc(File(calls1.file))
+    private val rows = doc?.let { scraper.getTableRows(it) }
     val calls = rows?.let { scraper.getCalls(it) }!!
 
     @Test
@@ -35,15 +38,5 @@ class GeneralTests {
         assert(calls.size == 14)
     }
 
-    @ExperimentalCoroutinesApi
-    @Test
-    fun `count new events`() {
-        var receivedAny = false
-        runBlocking {
-            val call = newCallChannel.poll()
-            assertNotNull(call)
-            assert(receivedAny)
-        }
-    }
 
 }

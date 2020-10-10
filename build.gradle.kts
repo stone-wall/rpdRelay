@@ -1,13 +1,13 @@
 plugins {
     application
     java
-    kotlin("jvm") version "1.3.72"
-    kotlin("plugin.serialization") version "1.3.70"
+    kotlin("jvm") version "1.4.0"
+    kotlin("plugin.serialization") version "1.4.0"
 
 }
 
 group = "com.github.stonewall"
-version = "1.1"
+version = "2.1"
 
 repositories {
     mavenCentral()
@@ -19,8 +19,8 @@ dependencies {
     implementation("org.jsoup:jsoup:1.13.1")
     implementation("io.github.microutils:kotlin-logging:1.7.9")
     implementation(kotlin("stdlib-jdk8"))
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-runtime:0.20.0") // JVM dependency
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.7")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
     testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
     implementation(kotlin("reflect"))
     testImplementation(kotlin("test"))
@@ -33,12 +33,6 @@ application {
 
 
 tasks {
-    compileKotlin {
-        kotlinOptions.jvmTarget = "11"
-    }
-    compileTestKotlin {
-        kotlinOptions.jvmTarget = "11"
-    }
     test {
         doFirst {
             processTestResources

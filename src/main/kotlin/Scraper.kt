@@ -1,19 +1,15 @@
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.channels.BroadcastChannel
 import mu.KotlinLogging
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.select.Elements
-import twitter4j.TwitterFactory
 import java.io.File
 import java.lang.Exception
-import java.net.ConnectException
 import java.nio.charset.StandardCharsets
 import java.util.concurrent.CopyOnWriteArraySet
-import kotlin.concurrent.fixedRateTimer
 
-val newCallChannel = Channel<Call>(12)
+val newCallChannel = BroadcastChannel<Call>(12)
 val log = KotlinLogging.logger("Default")
 
 class Scraper(private val url: String, private val testMode: Boolean = false) {
@@ -28,7 +24,7 @@ class Scraper(private val url: String, private val testMode: Boolean = false) {
         } else {
             try {
                 Jsoup.connect(url).get()
-            } catch (e: ConnectException) {
+            } catch (e: Throwable) {
                 log.error { "Website is down, skipping execution" }
                 return null
             }
@@ -54,7 +50,7 @@ class Scraper(private val url: String, private val testMode: Boolean = false) {
         }
     }
 
-    private suspend fun emitCall(it: Call) {
+    suspend fun emitCall(it: Call) {
         withContext(Dispatchers.IO) {
             launch {
                 newCallChannel.send(it)

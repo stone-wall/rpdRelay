@@ -16,7 +16,7 @@ repositories {
 dependencies {
     implementation("org.twitter4j:twitter4j-core:4.0.7")
     implementation("org.slf4j:slf4j-simple:1.7.30")
-    implementation("org.jsoup:jsoup:1.13.1")
+    implementation("org.jsoup:jsoup:1.18.1")
     implementation("io.github.microutils:kotlin-logging:1.7.9")
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.0")

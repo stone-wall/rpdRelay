@@ -20,7 +20,7 @@ dependencies {
     implementation("io.github.microutils:kotlin-logging:1.7.9")
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.0.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.9")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     testImplementation("org.junit.jupiter:junit-jupiter:5.6.2")
     implementation(kotlin("reflect"))
     testImplementation(kotlin("test"))
